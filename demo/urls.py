@@ -6,11 +6,14 @@ from django.conf import settings
 
 from foodtaskerapp import views, apis
 
+login = auth_views.LoginView
+login.template_name = 'restaurant/sign_in.html'
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^$', views.home, name='home'),
-    url(r'^restaurant/sign-in/$', auth_views.login, {'template_name': 'restaurant/sign_in.html'}, name='restaurant-sign-in'),
-    url(r'^restaurant/sign-out/$', auth_views.logout, {'next_page': '/'}, name='restaurant-sign-out'),
+    url(r'^restaurant/sign-in/$', login.as_view(), {'template_name': 'restaurant/sign_in.html'}, name='restaurant-sign-in'),
+    url(r'^restaurant/sign-out/$', auth_views.LogoutView.as_view(), {'next_page': '/'}, name='restaurant-sign-out'),
     url(r'^restaurant/sign-up/$', views.restaurant_sign_up, name='restaurant-sign-up'),
     url(r'^restaurant/$', views.restaurant_home, name='restaurant-home'),
 

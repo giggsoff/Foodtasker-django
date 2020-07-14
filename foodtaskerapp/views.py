@@ -9,22 +9,25 @@ from foodtaskerapp.models import Meal, Order, Driver
 
 from django.db.models import Sum, Count, Case, When
 
+
 # Create your views here.
 def home(request):
     return redirect(restaurant_home)
+
 
 @login_required(login_url='/restaurant/sign-in/')
 def restaurant_home(request):
     return redirect(restaurant_order)
 
+
 @login_required(login_url='/restaurant/sign-in/')
 def restaurant_account(request):
-    user_form = UserFormForEdit(instance = request.user)
-    restaurant_form = RestaurantForm(instance = request.user.restaurant)
+    user_form = UserFormForEdit(instance=request.user)
+    restaurant_form = RestaurantForm(instance=request.user.restaurant)
 
     if request.method == "POST":
-        user_form = UserFormForEdit(request.POST, instance = request.user)
-        restaurant_form = RestaurantForm(request.POST, request.FILES, instance = request.user.restaurant)
+        user_form = UserFormForEdit(request.POST, instance=request.user)
+        restaurant_form = RestaurantForm(request.POST, request.FILES, instance=request.user.restaurant)
 
         if user_form.is_valid() and restaurant_form.is_valid():
             user_form.save()
@@ -35,10 +38,12 @@ def restaurant_account(request):
         "restaurant_form": restaurant_form
     })
 
+
 @login_required(login_url='/restaurant/sign-in/')
 def restaurant_meal(request):
     meals = Meal.objects.filter(restaurant=request.user.restaurant).order_by("-id")
-    return render(request, 'restaurant/meal.html', {"meals":meals})
+    return render(request, 'restaurant/meal.html', {"meals": meals})
+
 
 @login_required(login_url='/restaurant/sign-in/')
 def restaurant_add_meal(request):
@@ -57,12 +62,13 @@ def restaurant_add_meal(request):
         "form": form
     })
 
+
 @login_required(login_url='/restaurant/sign-in/')
 def restaurant_edit_meal(request, meal_id):
-    form = MealForm(instance = Meal.objects.get(id = meal_id))
+    form = MealForm(instance=Meal.objects.get(id=meal_id))
 
     if request.method == "POST":
-        form = MealForm(request.POST, request.FILES, instance = Meal.objects.get(id = meal_id))
+        form = MealForm(request.POST, request.FILES, instance=Meal.objects.get(id=meal_id))
 
         if form.is_valid():
             form.save()
@@ -72,16 +78,18 @@ def restaurant_edit_meal(request, meal_id):
         "form": form
     })
 
+
 @login_required(login_url='/restaurant/sign-in/')
 def restaurant_order(request):
     if request.method == "POST":
-        order=Order.objects.get(id=request.POST["id"], restaurant = request.user.restaurant)
+        order = Order.objects.get(id=request.POST["id"], restaurant=request.user.restaurant)
         if order.status == Order.COOKING:
             order.status = Order.READY
             order.save()
 
-    orders = Order.objects.filter(restaurant = request.user.restaurant).order_by("-id")
+    orders = Order.objects.filter(restaurant=request.user.restaurant).order_by("-id")
     return render(request, 'restaurant/order.html', {"orders": orders})
+
 
 @login_required(login_url='/restaurant/sign-in/')
 def restaurant_report(request):
@@ -93,23 +101,23 @@ def restaurant_report(request):
 
     # calculate weekdays
     today = datetime.now()
-    current_weekdays = [today + timedelta(days=i) for i in range(0-today.weekday(), 7-today.weekday())]
+    current_weekdays = [today + timedelta(days=i) for i in range(0 - today.weekday(), 7 - today.weekday())]
 
     for day in current_weekdays:
         delivered_orders = Order.objects.filter(
-            restaurant = request.user.restaurant,
-            status = Order.DELIVERED,
-            created_at__year = day.year,
-            created_at__month = day.month,
-            created_at__day = day.day,
+            restaurant=request.user.restaurant,
+            status=Order.DELIVERED,
+            created_at__year=day.year,
+            created_at__month=day.month,
+            created_at__day=day.day,
         )
         revenue.append(sum(order.total for order in delivered_orders))
         orders.append(delivered_orders.count())
 
     # top 3 Meals
-    top3_meals = Meal.objects.filter(restaurant=request.user.restaurant)\
-                    .annotate(total_order=Sum('orderdetails__quantity'))\
-                    .order_by("-total_order")[:3]
+    top3_meals = Meal.objects.filter(restaurant=request.user.restaurant) \
+                     .annotate(total_order=Sum('orderdetails__quantity')) \
+                     .order_by("-total_order")[:3]
 
     meal = {
         "labels": [meal.name for meal in top3_meals],
@@ -118,7 +126,7 @@ def restaurant_report(request):
 
     # top 3 drivers
     top3_drivers = Driver.objects.annotate(
-        total_order = Count(
+        total_order=Count(
             Case(
                 When(order__restaurant=request.user.restaurant, then=1)
             )
@@ -137,6 +145,7 @@ def restaurant_report(request):
         "driver": driver
     })
 
+
 def restaurant_sign_up(request):
     user_form = UserForm()
     restaurant_form = RestaurantForm()
@@ -144,8 +153,8 @@ def restaurant_sign_up(request):
     if request.method == "POST":
         user_form = UserForm(request.POST)
         restaurant_form = RestaurantForm(request.POST, request.FILES)
-        #print(user_form.is_valid())
-        #print(restaurant_form.is_valid())
+        # print(user_form.is_valid())
+        # print(restaurant_form.is_valid())
 
         if user_form.is_valid() and restaurant_form.is_valid():
             new_user = User.objects.create_user(**user_form.cleaned_data)
@@ -153,7 +162,7 @@ def restaurant_sign_up(request):
             new_restaurant.user = new_user
             new_restaurant.save()
 
-            login(request,authenticate(
+            login(request, authenticate(
                 username=user_form.cleaned_data["username"],
                 password=user_form.cleaned_data["password"]
             ))
